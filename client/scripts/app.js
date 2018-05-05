@@ -1,12 +1,14 @@
 
 var app = {};
 var allMessages = [];
-
+var allRooms = [];
+var oldRooms = [];
 $(document).ready(function() {
-  app.init();
+  // app.init();
   var $sendMessage = $('#send-message');
-  setInterval(app.fetch(), 5000);
-  
+  var $createRoom = $('#create-room');
+  setInterval(function() { app.fetch() }, 3000);
+  setInterval(function() { app.init() }, 3000);
   
   ($sendMessage).click(function() {
     $('#chats').html('');
@@ -14,18 +16,23 @@ $(document).ready(function() {
     var message = {};
     message.username = window.location.search;
     message.text = $('.input').val();
+    message.roomname = currentRoom;
     app.send(message);
     app.fetch();
-    
-    console.log(currentRoom);
-    
     for (var i = 0; i < allMessages.length; i++) {
-      console.log(allMessages[i].roomname);
+      // console.log(allMessages[i].roomname);
       if (allMessages[i].roomname === currentRoom) {
-        console.log('hi');
         app.renderMessage(allMessages[i]);
       }
     }
+  $('.input').html('');
+  });
+  
+  ($createRoom).click(function() {
+    console.log($('.roomInput').val())
+    var newRoomName = $('.roomInput').val();
+    app.renderRoom(newRoomName);
+    $('.roomInput').html('');
   });
   
   //helperfucntion
@@ -38,7 +45,7 @@ $(document).ready(function() {
 
 
 app.init = function() {
-  // app.fetch();
+  app.clearMessages();
   var currentRoom = $('#roomSelect').find(':selected').text();
   for (var i = 0; i < allMessages.length; i++) {
     if (allMessages[i].roomname === currentRoom) {
@@ -51,6 +58,7 @@ app.init = function() {
 };
 
 app.send = function(message) {
+  
   $.ajax({
     // This is the url you should use to communicate with the parse API server.
     url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
@@ -72,10 +80,23 @@ app.fetch = function() {
     // This is the url you should use to communicate with the parse API server.
     url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
     type: 'GET',
+    data: 'order=-createdAt',
     contentType: 'application/json',  
     success: function (data) {
-      console.log('chatterbox: Message received', data.results);
+      console.log('chatterbox: Message received');
+      allMessages = [];
       allMessages = allMessages.concat(data.results);
+      allMessages.forEach(function(message) {
+        if(!allRooms.includes(message.roomname)) {
+          allRooms.push(message.roomname);
+        }
+      })
+      allRooms.forEach(function(roomName) {
+        if(!oldRooms.includes(roomName)) {
+          app.renderRoom(roomName);
+          oldRooms.push(roomName);
+        }
+      })
     },
     error: function (data) {
       // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -93,13 +114,17 @@ app.clearMessages = function() {
 };
 
 app.renderMessage = function(message) {  
-  console.log(message);
-  var chat = $('<div class="chat"><div class="text"><p>' + message.text + '</p></div>' + `<div class="username">${message.username}</div>` + `<div class="roomname">${message.roomname}</div></div>`);
+  // console.log(message);
+  var escapedText = function(input) {
+    return input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  var chat = $('<div class="chat"><div class="text"><p>' + escapedText(message.text) + '</p></div>' + `<div class="username">${message.username}</div>` + `<div class="roomname">${message.roomname}</div></div>`);
+  // var chat = $('<div class="chat"><div class="text"><p>' + message.text + '</p></div>' + `<div class="username">${message.username}</div>` + `<div class="roomname">${message.roomname}</div></div>`);
   chat.appendTo('#chats');
 };
 
 app.renderRoom = function(roomName) {  
-  console.log(roomName);
+  // console.log(roomName);
   var room = $(`<option value="${roomName}">${roomName}</option>`);
   room.appendTo('#roomSelect');
   //filter posts by room
