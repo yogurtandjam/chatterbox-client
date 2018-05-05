@@ -7,32 +7,39 @@ $(document).ready(function() {
   // app.init();
   var $sendMessage = $('#send-message');
   var $createRoom = $('#create-room');
-  setInterval(function() { app.fetch() }, 3000);
-  setInterval(function() { app.init() }, 3000);
+  var $refresh = $('#refresh-button');
+  // setInterval(function() { app.fetch() }, 3000);
+  // setInterval(function() { app.init() }, 3000);
   
   ($sendMessage).click(function() {
     $('#chats').html('');
     var currentRoom = $('#roomSelect').find(':selected').text();
     var message = {};
-    message.username = window.location.search;
-    message.text = $('.input').val();
+    message.username = window.location.search.substr(10);
+    message.text = $('.messageInput').val();
     message.roomname = currentRoom;
     app.send(message);
     app.fetch();
     for (var i = 0; i < allMessages.length; i++) {
-      // console.log(allMessages[i].roomname);
       if (allMessages[i].roomname === currentRoom) {
         app.renderMessage(allMessages[i]);
       }
     }
-  $('.input').html('');
+  $('.messageInput').val('');
   });
   
   ($createRoom).click(function() {
-    console.log($('.roomInput').val())
+    console.log($('.roomInput').val());
     var newRoomName = $('.roomInput').val();
     app.renderRoom(newRoomName);
-    $('.roomInput').html('');
+    $('.roomInput').val('');
+  });
+  
+  //click button
+  //app.fetch + app.init
+  ($refresh).click( function () {
+    app.fetch();
+    app.init();
   });
   
   //helperfucntion
@@ -114,13 +121,17 @@ app.clearMessages = function() {
 };
 
 app.renderMessage = function(message) {  
-  // console.log(message);
   var escapedText = function(input) {
     return input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
-  var chat = $('<div class="chat"><div class="text"><p>' + escapedText(message.text) + '</p></div>' + `<div class="username">${message.username}</div>` + `<div class="roomname">${message.roomname}</div></div>`);
+  
+  var chat = $(`<div class="chat ${message.username}"><div class="text"><p>` + escapedText(message.text) + '</p></div>' + `<div class="username">${message.username}</div>` + `<div class="roomname">${message.roomname}</div></div>`);
   // var chat = $('<div class="chat"><div class="text"><p>' + message.text + '</p></div>' + `<div class="username">${message.username}</div>` + `<div class="roomname">${message.roomname}</div></div>`);
   chat.appendTo('#chats');
+    $('.username').click(function(){
+    var test = `.${this.innerText}`;
+    $(test).toggleClass('friend');
+  })
 };
 
 app.renderRoom = function(roomName) {  
@@ -136,10 +147,12 @@ app.filterByRoom = function(roomName) {
 };
 
 app.handleUsernameClick = function() {
-  var $username = document.getElementByClassName('username');
-  ($username).click(function() {
-  });
+  // var $username = document.getElementByClassName('username');
+  // ($username).click(function() {
+  //   ('.?username=heythere').toggleclass('friend');
+  // });
 };
+
 
 
 
